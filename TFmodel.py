@@ -71,7 +71,7 @@ def train_and_save_model():
 
     # Callbacks per migliorare le prestazioni
     checkpoint_cb = callbacks.ModelCheckpoint(
-        './models/best_emotion_model.keras', save_best_only=True, monitor='val_accuracy', mode='max')
+        './best_emotion_model.keras', save_best_only=True, monitor='val_accuracy', mode='max')
     early_stopping_cb = callbacks.EarlyStopping(
         patience=10, restore_best_weights=True, monitor='val_accuracy')
 
