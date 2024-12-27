@@ -6,7 +6,8 @@ from tensorflow.keras import Input
 from FEdataset import prepare_data
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Disattiva warning non critici
-
+keras_path = 'models/best_emotion_model.keras'
+tflite_path = 'models/emotion_model.tflite'
 
 def create_model(input_shape, num_classes):
     """
@@ -71,7 +72,7 @@ def train_and_save_model():
 
     # Callbacks per migliorare le prestazioni
     checkpoint_cb = callbacks.ModelCheckpoint(
-        './best_emotion_model.keras', save_best_only=True, monitor='val_accuracy', mode='max')
+        keras_path, save_best_only=True, monitor='val_accuracy', mode='max')
     early_stopping_cb = callbacks.EarlyStopping(
         patience=10, restore_best_weights=True, monitor='val_accuracy')
 
@@ -97,7 +98,7 @@ def train_and_save_model():
     print(f"Accuratezza finale sul test set: {test_accuracy * 100:.2f}%")
 
     # Converte e salva in formato TensorFlow Lite
-    convert_to_tflite('best_emotion_model.keras', 'emotion_model.tflite')
+    convert_to_tflite(keras_path, tflite_path)
 
 
 def convert_to_tflite(model_path, tflite_path, quantize=True):
@@ -170,9 +171,6 @@ def verify_tflite_model(tflite_path):
 if __name__ == "__main__":
     # Addestramento e salvataggio del modello
     train_and_save_model()
-
-    # Path del modello quantizzato
-    tflite_path = 'emotion_model.tflite'
 
     # Verifica del modello TFLite
     verify_tflite_model(tflite_path)
