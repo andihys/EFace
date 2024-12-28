@@ -1,54 +1,125 @@
-### Digital Systems project
-# EFace
+# EmotionalFaces Recognition App
 
-EFace is an Application for emotional face recognition developed for Android OS.
+## <span style="color:blue;">Project Description</span>
+ 
+This project is part of the master's degree program in **Computer Engineering**, within the **Digital Systems** curriculum.
+The main objective is to develop an Android application for emotion recognition using a **Machine Learning** model optimized for mobile devices via **TensorFlow Lite**. The app allows users to:
 
-- Dataset: https://www.kaggle.com/datasets/msambare/fer2013
+1. Take a photo using the device's camera.
+2. Process the image through a TFLite model to determine the predominant emotion.
+3. Display the result directly on the user interface.
 
-The data consists of 48x48 pixel grayscale images of faces. The faces have been automatically registered so that the face is more or less centred and occupies about the same amount of space in each image.
-The training set consists of 28,709 examples and the public test set consists of 3,589 examples.
-> The task is to categorize each face based on the emotion shown in the facial expression into one of seven categories (0=Angry, 1=Disgust, 2=Fear, 3=Happy, 4=Sad, 5=Surprise, 6=Neutral).
+The model was trained using the **FER2013** dataset with advanced deep learning techniques, and its optimized format ensures high performance on mobile devices.
+
+---
+
+## <span style="color:blue;">Features</span>
+- **Image Capture**: Utilizes CameraX to take photos using the front-facing camera.
+- **Real-Time Inference**: Processes images using a convolutional neural network model.
+- **User-Friendly Interface**: Displays results directly in the app's text area.
+- **Mobile Optimization**: Model optimized through quantization.
+
+---
+
+## <span style="color:blue;">Requirements</span>
+
+### For the Android App
+- Android Studio (version >= 2022.1.1)
+- Gradle (version >= 7.4)
+- Device with Android 6.0 (API 23) or higher
+
+### For Model Training
+- Python >= 3.8
+- TensorFlow >= 2.9
+- Additional libraries:
+  - `numpy`
+  - `scikit-learn`
+  - `pillow`
+
+---
+
+## <span style="color:blue;">Project structure</span>
+
+### Main Directories
+- **`app/`**: Source code for the Android app.
+  - `src/main/assets`: Optimized model in TFLite format (`emotion_model.tflite`).
+  - `res/layout`: XML layouts for the user interface.
+  - `java/com/example/emotionalfaces`: Application logic.
+- **`models/`**: Contains files generated during training, including:
+  - `best_emotion_model.keras`: Trained model.
+  - `emotion_model.tflite`: Optimized model for mobile devices.
+- **`datasets/`**: Dataset used for training (FER2013).
+
+### Key Files
+- **`MainActivity.java`**: Android app logic.
+- **`TFmodel.py`**: Script for training and converting the model.
+- **`FEdataset.py`**: Script for loading and preprocessing the FER2013 dataset.
+
+---
+## <span style="color:blue;">Installation and Usage</span>
+
+### 1. Android App
+
+#### **Environment Setup**
+1. Open the project in Android Studio.
+2. Synchronize the Gradle files.
+3. Add the `emotion_model.tflite` file to the `app/src/main/assets` directory (already included in the project).
+
+#### **Execution**
+1. Connect an Android device or use an emulator.
+2. Press the **Run** button (green triangle) in Android Studio.
+3. Launch the app on the device and explore its features.
+
+---
+
+### 2. Model Training
+
+#### **Requirements**
+Ensure the following Python dependencies are installed:
+```bash
+pip install numpy scikit-learn pillow tensorflow
+```
+
+#### **Model Training**
+1. Download the FER2013 dataset and place it in the `datasets/fer2013.zip` directory.
+2. Run the `TFmodel.py` script:
+   ```bash
+   python TFmodel.py
+   ```
+3. The trained model will be saved in `.keras` and `.tflite` formats in the `models/` directory.
+
+---
+
+## <span style="color:blue;">Technical Details</span>
 
 
-## Project Structure
-This project is divided into two main parts:
-Dataset Loading and Model Training (Python)
-Android Application (Kotlin)
+### **Machine Learning Model**
+- Architecture: Convolutional Neural Network (CNN)
+  - 3 convolutional blocks with batch normalization and dropout.
+  - Fully connected layers with `ReLU` and `softmax` activation.
+- Input: Grayscale images, size 48x48.
+- Output: 7 emotion classes (`angry`, `disgust`, `fear`, `happy`, `neutral`, `sad`, `surprise`).
 
-### 1. Dataset Loading and Model Training
+### **TFLite Quantization**
+- **Full-integer quantization** for optimized performance.
+- Data representative configured to ensure high accuracy.
 
-This part is responsible for:
-   - Downloading the FER2013 dataset from Kaggle APIs.
-   - Preprocessing the data (e.g., resizing, normalization).
-   - Training a Convolutional Neural Network (CNN) for emotion recognition.
-   - Converting the trained model to TensorFlow Lite format for Android integration.
-- Key Files:
-  - FEdataset.py: This script handles downloading the dataset from Kaggle using their API. It requires a Kaggle API token to be configured. It then preprocesses the data and saves it in a suitable format for training.
-  - TFmodel.py: This script defines the CNN architecture, trains the model using the preprocessed data, and evaluates its performance. Finally, it converts the trained model to TensorFlow Lite format and saves it as model.tflite. This file will be integrated into the Android application.
+### **Dataset**
+- **Name**: FER2013 (Facial Expression Recognition 2013)
+- **Format**: ZIP file organized into directories for emotion categories.
+- **Preprocessing**:
+  - Conversion to grayscale.
+  - Pixel normalization (0-1).
+  - Split into training (80%) and testing (20%).
 
-### 2. Android Application
+---
 
-This part is responsible for:
-- Integrating the TensorFlow Lite model (model.tflite).
-- Capturing camera frames or loading images.
-- Preprocessing input images for the model.
-- Running inference using the model.
-- Displaying the predicted emotion.
-- Development:
-  - The Android application is developed using Android Studio and Kotlin. It will utilize the CameraX API for camera access and TensorFlow Lite for inference.
-  
-- Future Work:
-  - Implement real-time emotion recognition using the device's camera.
-  Improve the user interface and add features like saving recognized emotions.
-  Explore different CNN architectures and optimization techniques to enhance accuracy.
+## <span style="color:blue;">Conclusion</span>
 
-## Getting Started
-1. Dataset and Model Training:
-Install the required Python libraries: pip install tensorflow keras pandas numpy kaggle
-Configure your Kaggle API token.
-Run FEdataset.py to download and preprocess the dataset.
-Run TFmodel.py to train the model and generate model.tflite.
-2. Android Application:
-Open the Android project in Android Studio.
-Place the model.tflite file in the assets folder of the Android project.
-Implement the remaining Android application logic.
+This project demonstrates the effectiveness of emotion recognition using convolutional neural networks and its integration on mobile devices. The combination of an intuitive Android app and an optimized TFLite model represents a step forward in real-world AI-based applications.
+
+---
+
+## License
+This project is distributed under the MIT License. See the `LICENSE` file for more details.
+
