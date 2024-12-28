@@ -1,8 +1,7 @@
 # EmotionalFaces Recognition App
 
 ## <span style="color:blue;">Project Description</span>
- 
-This project is part of the master's degree program in **Computer Engineering**, within the **Digital Systems** curriculum.
+
 The main objective is to develop an Android application for emotion recognition using a **Machine Learning** model optimized for mobile devices via **TensorFlow Lite**. The app allows users to:
 
 1. Take a photo using the device's camera.
