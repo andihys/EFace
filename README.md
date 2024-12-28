@@ -123,5 +123,7 @@ This project demonstrates the effectiveness of emotion recognition using convolu
 ## License
 This project is distributed under the MIT License. See the `LICENSE` file for more details.
 
-<img src="images/Screenshot_20241228-211428_EmotionalFaces.jpg" alt="Flight Dashboard" width="250">
-<img src="images/Screenshot_20241228-211454_EmotionalFaces.jpg" alt="Flight Dashboard" width="250">
+<div style="display: flex; justify-content: center; gap: 10px;">
+  <img src="images/Screenshot_20241228-211428_EmotionalFaces.jpg" alt="Screenshot 1" width="250">
+  <img src="images/Screenshot_20241228-211454_EmotionalFaces.jpg" alt="Screenshot 2" width="250">
+</div>
