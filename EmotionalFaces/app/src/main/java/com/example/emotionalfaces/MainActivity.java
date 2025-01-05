@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
                     if (bitmap != null) {
                         capturedBitmap = bitmap; // Assegna il Bitmap
                         imageView.setImageBitmap(capturedBitmap);
-                        Toast.makeText(MainActivity.this, "Foto scattata e visualizzata!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Picture displayed", Toast.LENGTH_SHORT).show();
                     }
                 });
                 image.close();
@@ -232,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(@NonNull ImageCaptureException exception) {
-                Log.e("MainActivity", "Errore durante lo scatto della foto: " + exception.getMessage());
+                Log.e("MainActivity", "Picture load error" + exception.getMessage());
             }
         });
     }
