@@ -3,5 +3,5 @@
     <string name="this_is_my_button">This is my button</string>
     <string name="take_picture">Take Picture</string>
     <string name="process_image">Process Image</string>
-    <string name="emotion_detected">Emozione rilevata: </string>
+    <string name="emotion_detected">Emotion detected: </string>
 </resources>
