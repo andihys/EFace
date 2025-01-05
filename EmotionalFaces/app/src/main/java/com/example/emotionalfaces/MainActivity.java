@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                 String emotion = processImage(capturedBitmap);
                 textView.setText(getString(R.string.emotion_detected) + emotion);
             } else {
-                Toast.makeText(this, "Scatta prima una foto!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
             }
         });
     }
