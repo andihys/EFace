@@ -212,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void takePhoto() {
         if (imageCapture == null) {
-            Toast.makeText(this, "ImageCapture non è configurato", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "ImageCapture is not configured", Toast.LENGTH_SHORT).show();
             return;
         }
 
