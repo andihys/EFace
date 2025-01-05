@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             tflite = loadModel(MODEL_PATH);
         } catch (IOException e) {
-            Log.e("MainActivity", "Errore nel caricamento del modello TFLite: " + e.getMessage());
+            Log.e("MainActivity", "ML model TFLite upload error: " + e.getMessage());
         }
 
         // Aggiungi azione per il pulsante "Take Picture"
