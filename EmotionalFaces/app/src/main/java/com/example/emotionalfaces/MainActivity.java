@@ -1,5 +1,4 @@
 package com.example.emotionalfaces;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -12,7 +11,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
@@ -25,16 +23,13 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import com.google.common.util.concurrent.ListenableFuture;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import org.tensorflow.lite.Interpreter;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,12 +39,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private ImageCapture imageCapture;
     private ExecutorService cameraExecutor;
-
-    private static final int CAMERA_PERMISSION_REQUEST_CODE = 10;
-
     private Bitmap capturedBitmap;
     private Interpreter tflite;
-
+    private static final int CAMERA_PERMISSION_REQUEST_CODE = 10;
     private static final String MODEL_PATH = "emotion_model.tflite";
     private static final int IMAGE_SIZE = 48; // Dimensione richiesta dal modello
     private static final String[] EMOTIONS = {"Angry", "Disgust", "Fear", "Happy", "Neutral", "Sad", "Surprise"};
@@ -98,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
     private Interpreter loadModel(String modelPath) throws IOException {
         try (AssetFileDescriptor fileDescriptor = getAssets().openFd(modelPath);
              FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor())) {
@@ -112,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
             return new Interpreter(buffer);
         }
     }
+
 
     private String processImage(Bitmap bitmap) {
         // Ridimensiona e preprocessa l'immagine
@@ -147,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
@@ -181,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
+
     private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
         if (rotationDegrees == 0) {
             return bitmap; // Nessuna rotazione necessaria
@@ -193,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
         // Crea il Bitmap ruotato
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
+
 
     private Bitmap imageProxyToBitmap(ImageProxy image) {
         // Ottieni il buffer dell'immagine
@@ -249,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
 
     @Override
     protected void onDestroy() {
