@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                 );
 
             } catch (Exception e) {
-                Log.e("MainActivity", "Errore nell'avvio della fotocamera", e);
+                Log.e("MainActivity", "Opening camera error", e);
             }
         }, ContextCompat.getMainExecutor(this));
     }
