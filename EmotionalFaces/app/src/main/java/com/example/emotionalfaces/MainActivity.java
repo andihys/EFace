@@ -35,10 +35,6 @@ import java.util.concurrent.Executors;
 
 import org.tensorflow.lite.Interpreter;
 
-import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageAnalysis.Analyzer;
-import java.util.concurrent.TimeUnit;
-
 public class MainActivity extends AppCompatActivity {
 
     private PreviewView previewView;
@@ -84,22 +80,26 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.e("MainActivity", "ML model TFLite upload error: " + e.getMessage());
         }
-        // Aggiungi azione per il pulsante "Take Picture"
+        // azione per il pulsante "Take Picture"
         buttonTakePicture.setOnClickListener(v -> takePhoto());
 
-        // Azione per processare l'immagine
+        // azione per processare l'immagine
         buttonProcess.setOnClickListener(v -> {
-            if (capturedBitmap != null) {
-                String emotion = processImage_8b(capturedBitmap);
-                //String emotion = processImage_16f(capturedBitmap);
-                textView.setText(getString(R.string.emotion_detected) + " " + emotion);
-            } else {
-                // Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
-                Log.e("MainActivity", "No image to process");
-            }
+            inference();
         });
 
         startBackgroundprocess();
+    }
+
+    private void inference(){
+        if (capturedBitmap != null) {
+            String emotion = processImage_8b(capturedBitmap);
+            //String emotion = processImage_16f(capturedBitmap);
+            textView.setText(getString(R.string.emotion_detected) + " " + emotion);
+        } else {
+            // Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
+            Log.e("MainActivity", "No image to process");
+        }
     }
 
 
@@ -116,14 +116,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     takePhoto();
                     runOnUiThread(() -> {
-                        if (capturedBitmap != null) {
-                            String emotion = processImage_8b(capturedBitmap);
-                            // String emotion = processImage_16f(capturedBitmap);
-                            textView.setText(getString(R.string.emotion_detected) + " " + emotion);
-                        } else {
-                            // Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
-                            Log.e("MainActivity", "No image to process");
-                        }
+                        inference();
                     });
                     Thread.sleep(TIME_DETECTION);
                 } catch (InterruptedException e) {
@@ -237,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
                 imageCapture = new ImageCapture.Builder().build();
 
                 // Collega tutto al lifecycle della Activity
-                 Camera camera = cameraProvider.bindToLifecycle(
+                Camera camera = cameraProvider.bindToLifecycle(
                         this,
                         cameraSelector,
                         preview,
@@ -249,18 +242,24 @@ public class MainActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
+
     private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
         if (rotationDegrees == 0) {
-            return bitmap;
+            // Flip the image horizontally without rotation
+            android.graphics.Matrix matrix = new android.graphics.Matrix();
+            matrix.postScale(-1, 1, bitmap.getWidth() / 2f, bitmap.getHeight() / 2f);
+            return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
         }
 
-        // Configura la matrice per la rotazione
+        // Configura la matrice per la rotazione e il flip orizzontale
         android.graphics.Matrix matrix = new android.graphics.Matrix();
         matrix.postRotate(rotationDegrees);
+        matrix.postScale(-1, 1, bitmap.getWidth() / 2f, bitmap.getHeight() / 2f);
 
-        // Crea il Bitmap ruotato
+        // Crea il Bitmap ruotato e specchiato
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
+
 
 
     private Bitmap imageProxyToBitmap(ImageProxy image) {
