@@ -82,7 +82,8 @@ public class MainActivity extends AppCompatActivity {
         // Azione per processare l'immagine
         buttonProcess.setOnClickListener(v -> {
             if (capturedBitmap != null) {
-                String emotion = processImage(capturedBitmap);
+                String emotion = processImage_8b(capturedBitmap);
+                //String emotion = processImage_16f(capturedBitmap);
                 textView.setText(getString(R.string.emotion_detected) + emotion);
             } else {
                 Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
@@ -107,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private String processImage(Bitmap bitmap) {
+    private String processImage_8b(Bitmap bitmap) {
         // Ridimensiona e preprocessa l'immagine
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, IMAGE_SIZE, IMAGE_SIZE, true);
         ByteBuffer inputBuffer = ByteBuffer.allocateDirect(IMAGE_SIZE * IMAGE_SIZE);
@@ -130,6 +131,40 @@ public class MainActivity extends AppCompatActivity {
         // Trova l'emozione con la probabilità più alta
         int maxIndex = 0;
         byte maxProb = output[0][0];
+        for (int i = 1; i < output[0].length; i++) {
+            if (output[0][i] > maxProb) {
+                maxProb = output[0][i];
+                maxIndex = i;
+            }
+        }
+
+        return EMOTIONS[maxIndex];
+    }
+
+
+    private String processImage_16f(Bitmap bitmap) {
+        // Ridimensiona e preprocessa l'immagine
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, IMAGE_SIZE, IMAGE_SIZE, true);
+        ByteBuffer inputBuffer = ByteBuffer.allocateDirect(IMAGE_SIZE * IMAGE_SIZE * 4); // float = 4 byte
+        inputBuffer.order(ByteOrder.nativeOrder());
+
+        for (int y = 0; y < IMAGE_SIZE; y++) {
+            for (int x = 0; x < IMAGE_SIZE; x++) {
+                int pixel = resizedBitmap.getPixel(x, y);
+                int gray = (pixel >> 16) & 0xFF; // Estrai il valore in scala di grigi
+                inputBuffer.putFloat(gray / 255.0f); // Normalizza in [0, 1] per float16
+            }
+        }
+
+        // Buffer per l'output del modello
+        float[][] output = new float[1][EMOTIONS.length]; // Cambia in float[][] per float16
+
+        // Esegui l'inferenza
+        tflite.run(inputBuffer, output);
+
+        // Trova l'emozione con la probabilità più alta
+        int maxIndex = 0;
+        float maxProb = output[0][0];
         for (int i = 1; i < output[0].length; i++) {
             if (output[0][i] > maxProb) {
                 maxProb = output[0][i];
