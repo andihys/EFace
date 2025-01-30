@@ -1,4 +1,5 @@
 package com.example.emotionalfaces;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -6,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -23,14 +23,21 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import com.google.common.util.concurrent.ListenableFuture;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 import org.tensorflow.lite.Interpreter;
+
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageAnalysis.Analyzer;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -75,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.e("MainActivity", "ML model TFLite upload error: " + e.getMessage());
         }
-
         // Aggiungi azione per il pulsante "Take Picture"
         buttonTakePicture.setOnClickListener(v -> takePhoto());
 
@@ -87,6 +93,37 @@ public class MainActivity extends AppCompatActivity {
                 textView.setText(getString(R.string.emotion_detected) + emotion);
             } else {
                 Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        startBackgroundprocess();
+
+    }
+    private void startBackgroundprocess() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+        executorService.execute(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(10000);
+
+                    // Aggiungi azione per il pulsante "Take Picture"
+                    takePhoto();
+
+                    // Esegui il resto del codice sul thread principale
+                    runOnUiThread(() -> {
+                        if (capturedBitmap != null) {
+                            String emotion = processImage_8b(capturedBitmap);
+                            // String emotion = processImage_16f(capturedBitmap);
+                            textView.setText(getString(R.string.emotion_detected) + emotion);
+                        } else {
+                            Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    Log.e("MainActivity", "Background process error: " + e.getMessage());
+                    break;
+                }
             }
         });
     }
@@ -192,16 +229,19 @@ public class MainActivity extends AppCompatActivity {
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
+
                 // Configura ImageCapture per scattare foto
                 imageCapture = new ImageCapture.Builder().build();
 
                 // Collega tutto al lifecycle della Activity
-                Camera camera = cameraProvider.bindToLifecycle(
+                 Camera camera = cameraProvider.bindToLifecycle(
                         this,
                         cameraSelector,
                         preview,
                         imageCapture
                 );
+
+
 
             } catch (Exception e) {
                 Log.e("MainActivity", "Opening camera error", e);
@@ -209,6 +249,40 @@ public class MainActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
+    private class FrameAnalyzer implements ImageAnalysis.Analyzer {
+        private long lastAnalyzedTime = 0;
+
+        @Override
+        public void analyze(@NonNull ImageProxy image) {
+            long currentTime = System.currentTimeMillis();
+
+            // Processa un frame ogni 10 secondi
+            if (currentTime - lastAnalyzedTime >= TimeUnit.SECONDS.toMillis(10)) {
+                try {
+                    Bitmap bitmap = imageProxyToBitmap(image);
+
+                    if (bitmap != null) {
+                        runOnUiThread(() -> {
+                            imageView.setImageBitmap(bitmap);
+                            String emotion = processImage_8b(bitmap); // Processa l'immagine e rileva l'emozione
+                            textView.setText(getString(R.string.emotion_detected) + emotion);
+                        });
+                    } else {
+                        Log.e("FrameAnalyzer", "Frame nullo, riprovo tra 10 secondi.");
+                    }
+
+                    lastAnalyzedTime = currentTime;
+                } catch (Exception e) {
+                    Log.e("FrameAnalyzer", "Errore durante l'elaborazione del frame: " + e.getMessage());
+                } finally {
+                    image.close(); // Assicurati che il frame venga sempre rilasciato
+                }
+            } else {
+                image.close(); // Rilascia il frame se non è ancora il momento di processarlo
+            }
+
+        }
+    }
 
     private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
         if (rotationDegrees == 0) {
