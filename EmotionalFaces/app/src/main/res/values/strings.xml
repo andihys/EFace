@@ -2,5 +2,5 @@
     <string name="app_name">EmotionalFaces</string>
     <string name="take_picture">Take Picture</string>
     <string name="process_image">Process Image</string>
-    <string name="emotion_detected">Emotion detected: </string>
+    <string name="emotion_detected">I\'m feeling</string>
 </resources>

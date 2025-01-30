@@ -49,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap capturedBitmap;
     private Interpreter tflite;
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 10;
+    private static final int TIME_DETECTION = 2000;
+    private static final int WAKE_UP_TIME = 1000;
     private static final String MODEL_PATH = "emotion_model.tflite";
     private static final int IMAGE_SIZE = 48; // Dimensione richiesta dal modello
     private static final String[] EMOTIONS = {"Angry", "Disgust", "Fear", "Happy", "Neutral", "Sad", "Surprise"};
@@ -90,36 +92,40 @@ public class MainActivity extends AppCompatActivity {
             if (capturedBitmap != null) {
                 String emotion = processImage_8b(capturedBitmap);
                 //String emotion = processImage_16f(capturedBitmap);
-                textView.setText(getString(R.string.emotion_detected) + emotion);
+                textView.setText(getString(R.string.emotion_detected) + " " + emotion);
             } else {
-                Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
+                // Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
+                Log.e("MainActivity", "No image to process");
             }
         });
 
         startBackgroundprocess();
-
     }
+
+
     private void startBackgroundprocess() {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
 
         executorService.execute(() -> {
+            try {
+                Thread.sleep(WAKE_UP_TIME);
+            } catch (Exception e) {
+                Log.e("Wake up error", "Error on wake up sleeping", e);
+            }
             while (true) {
                 try {
-                    Thread.sleep(10000);
-
-                    // Aggiungi azione per il pulsante "Take Picture"
                     takePhoto();
-
-                    // Esegui il resto del codice sul thread principale
                     runOnUiThread(() -> {
                         if (capturedBitmap != null) {
                             String emotion = processImage_8b(capturedBitmap);
                             // String emotion = processImage_16f(capturedBitmap);
-                            textView.setText(getString(R.string.emotion_detected) + emotion);
+                            textView.setText(getString(R.string.emotion_detected) + " " + emotion);
                         } else {
-                            Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
+                            // Toast.makeText(this, "Take a picture!", Toast.LENGTH_SHORT).show();
+                            Log.e("MainActivity", "No image to process");
                         }
                     });
+                    Thread.sleep(TIME_DETECTION);
                 } catch (InterruptedException e) {
                     Log.e("MainActivity", "Background process error: " + e.getMessage());
                     break;
@@ -174,7 +180,6 @@ public class MainActivity extends AppCompatActivity {
                 maxIndex = i;
             }
         }
-
         return EMOTIONS[maxIndex];
     }
 
@@ -208,7 +213,6 @@ public class MainActivity extends AppCompatActivity {
                 maxIndex = i;
             }
         }
-
         return EMOTIONS[maxIndex];
     }
 
@@ -229,7 +233,6 @@ public class MainActivity extends AppCompatActivity {
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-
                 // Configura ImageCapture per scattare foto
                 imageCapture = new ImageCapture.Builder().build();
 
@@ -240,53 +243,15 @@ public class MainActivity extends AppCompatActivity {
                         preview,
                         imageCapture
                 );
-
-
-
             } catch (Exception e) {
                 Log.e("MainActivity", "Opening camera error", e);
             }
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private class FrameAnalyzer implements ImageAnalysis.Analyzer {
-        private long lastAnalyzedTime = 0;
-
-        @Override
-        public void analyze(@NonNull ImageProxy image) {
-            long currentTime = System.currentTimeMillis();
-
-            // Processa un frame ogni 10 secondi
-            if (currentTime - lastAnalyzedTime >= TimeUnit.SECONDS.toMillis(10)) {
-                try {
-                    Bitmap bitmap = imageProxyToBitmap(image);
-
-                    if (bitmap != null) {
-                        runOnUiThread(() -> {
-                            imageView.setImageBitmap(bitmap);
-                            String emotion = processImage_8b(bitmap); // Processa l'immagine e rileva l'emozione
-                            textView.setText(getString(R.string.emotion_detected) + emotion);
-                        });
-                    } else {
-                        Log.e("FrameAnalyzer", "Frame nullo, riprovo tra 10 secondi.");
-                    }
-
-                    lastAnalyzedTime = currentTime;
-                } catch (Exception e) {
-                    Log.e("FrameAnalyzer", "Errore durante l'elaborazione del frame: " + e.getMessage());
-                } finally {
-                    image.close(); // Assicurati che il frame venga sempre rilasciato
-                }
-            } else {
-                image.close(); // Rilascia il frame se non è ancora il momento di processarlo
-            }
-
-        }
-    }
-
     private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
         if (rotationDegrees == 0) {
-            return bitmap; // Nessuna rotazione necessaria
+            return bitmap;
         }
 
         // Configura la matrice per la rotazione
@@ -328,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
                     if (bitmap != null) {
                         capturedBitmap = bitmap; // Assegna il Bitmap
                         imageView.setImageBitmap(capturedBitmap);
-                        Toast.makeText(MainActivity.this, "Picture displayed", Toast.LENGTH_SHORT).show();
+                        // Toast.makeText(MainActivity.this, "Picture displayed", Toast.LENGTH_SHORT).show();
                     }
                 });
                 image.close();
