@@ -98,24 +98,20 @@ def train_and_save_model():
     print(f"Accuratezza finale sul test set: {test_accuracy * 100:.2f}%")
 
     # Converte e salva in formato TensorFlow Lite
-    convert_to_tflite(keras_path, tflite_path)
+    convert_to_tflite_optimized(keras_path, tflite_path)
 
 
-def convert_to_tflite(model_path, tflite_path, quantize=True):
+def convert_to_tflite_optimized(model_path, tflite_path, quantization="int8"):
     """
-    Converte un modello TensorFlow in formato TensorFlow Lite con opzione per la quantizzazione
-    così da includere ottimizzazioni che riducono la dimensione del modello e
-    ne migliorano le prestazioni su dispositivi mobili.
-
-    La quantizzazione consiste nel ridurre la precisione dei numeri utilizzati nei calcoli
-    (ad esempio, passare da 32-bit float a 8-bit integer) per rendere il modello più leggero e veloce,
-    senza sacrificare troppo l'accuratezza.
+    Converte un modello TensorFlow in formato TensorFlow Lite con opzioni di quantizzazione avanzate.
 
     Args:
         model_path (str): Path al modello TensorFlow (.keras).
         tflite_path (str): Path per salvare il modello TFLite (.tflite).
-        quantize (bool): Se True, applica la quantizzazione.
-
+        quantization (str): Tipo di quantizzazione:
+            - "int8": Quantizzazione full-integer.
+            - "float16": Quantizzazione a precisione ridotta (float16).
+            - "none": Nessuna quantizzazione.
     """
     # Carica il modello TensorFlow
     model = tf.keras.models.load_model(model_path)
@@ -123,14 +119,14 @@ def convert_to_tflite(model_path, tflite_path, quantize=True):
     # Configura il convertitore TFLite
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
 
-    if quantize:
-        # Abilita la quantizzazione full-integer
-        print("Eseguendo la quantizzazione del modello...")
+    # Applica la quantizzazione selezionata
+    if quantization == "int8":
+        print("Eseguendo la quantizzazione full-integer...")
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
-        # Imposta un rappresentante dei dati per la quantizzazione full-integer
+        # Dataset rappresentativo per la quantizzazione full-integer
         def representative_dataset_gen():
-            X_train, _, _, _ = prepare_data()
+            X_train, _, _, _ = prepare_data()  # Assumi che prepare_data restituisca i dati preprocessati
             for i in range(min(100, len(X_train))):  # Usa fino a 100 campioni rappresentativi
                 yield [X_train[i].reshape(1, 48, 48, 1).astype("float32")]
 
@@ -139,13 +135,29 @@ def convert_to_tflite(model_path, tflite_path, quantize=True):
         converter.inference_input_type = tf.int8  # Input quantizzato
         converter.inference_output_type = tf.int8  # Output quantizzato
 
+    elif quantization == "float16":
+        print("Eseguendo la quantizzazione float16...")
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.target_spec.supported_types = [tf.float16]
+
+    else:
+        print("Nessuna quantizzazione applicata.")
+
     # Converte il modello
     tflite_model = converter.convert()
 
     # Salva il modello TFLite
     with open(tflite_path, 'wb') as f:
         f.write(tflite_model)
+
+    # Confronta la dimensione dei modelli
+    original_size = os.path.getsize(model_path)
+    tflite_size = os.path.getsize(tflite_path)
+    print(f"Modello originale: {original_size / 1024:.2f} KB")
+    print(f"Modello TFLite: {tflite_size / 1024:.2f} KB")
+    print(f"Riduzione dimensione: {100 * (1 - tflite_size / original_size):.2f}%")
     print(f"Modello convertito e salvato come '{tflite_path}'.")
+
 
 
 def verify_tflite_model(tflite_path):
@@ -172,6 +184,6 @@ if __name__ == "__main__":
     # Addestramento e salvataggio del modello
     train_and_save_model()
 
-    # Verifica del modello TFLite
-    verify_tflite_model(tflite_path)
+    # modello TFLite
+    convert_to_tflite_optimized("best_emotion_model.keras", "model_optimized.tflite", quantization="float16")
 
