@@ -28,12 +28,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.MappedByteBuffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.nnapi.NnApiDelegate;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,13 +47,14 @@ public class MainActivity extends AppCompatActivity {
     private ExecutorService cameraExecutor;
     private Bitmap capturedBitmap;
     private Interpreter tflite;
+    private NnApiDelegate nnApiDelegate;
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 10;
     private static final int TIME_DETECTION = 2000;
     private static final int WAKE_UP_TIME = 1000;
     private static final String MODEL_PATH = "emotion_model.tflite";
     private static final int IMAGE_SIZE = 48; // Dimensione richiesta dal modello
     private static final String[] EMOTIONS = {"Angry", "Disgust", "Fear", "Happy", "Neutral", "Sad", "Surprise"};
-
+    private static final int NUM_THREADS = Runtime.getRuntime().availableProcessors();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         startBackgroundprocess();
     }
 
+
     private void inference(){
         if (capturedBitmap != null) {
             String emotion = processImage_8b(capturedBitmap);
@@ -128,10 +133,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private Interpreter loadModel(String modelPath) throws IOException {
+    public Interpreter loadModel(String modelPath) throws IOException {
         try (AssetFileDescriptor fileDescriptor = getAssets().openFd(modelPath);
              FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor())) {
 
+            // Alloca buffer per il modello
             ByteBuffer buffer = ByteBuffer.allocateDirect((int) fileDescriptor.getLength());
             buffer.order(ByteOrder.nativeOrder());
 
@@ -139,29 +145,54 @@ public class MainActivity extends AppCompatActivity {
             inputStream.getChannel().read(buffer);
             buffer.flip();
 
-            return new Interpreter(buffer);
+            // Inizializza NNAPI Delegate
+            nnApiDelegate = new NnApiDelegate();
+            Interpreter.Options options = new Interpreter.Options();
+            options.addDelegate(nnApiDelegate); // Assegna NNAPI come delegato per la GPU
+
+            return new Interpreter(buffer, options);
         }
     }
 
 
-    private String processImage_8b(Bitmap bitmap) {
+    // Metodo per chiudere il delegate ed evitare memory leaks
+    public void nnapiclose() {
+        if (nnApiDelegate != null) {
+            nnApiDelegate.close();
+            nnApiDelegate = null;
+        }
+    }
+
+
+    public String processImage_8b(Bitmap bitmap) {
         // Ridimensiona e preprocessa l'immagine
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, IMAGE_SIZE, IMAGE_SIZE, true);
         ByteBuffer inputBuffer = ByteBuffer.allocateDirect(IMAGE_SIZE * IMAGE_SIZE);
         inputBuffer.order(ByteOrder.nativeOrder());
 
+        ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
+
+        // Divisione del lavoro tra più thread
         for (int y = 0; y < IMAGE_SIZE; y++) {
-            for (int x = 0; x < IMAGE_SIZE; x++) {
-                int pixel = resizedBitmap.getPixel(x, y);
-                int gray = (pixel >> 16) & 0xFF; // Estrai il valore in scala di grigi
-                inputBuffer.put((byte) (gray - 128)); // Centra i valori per INT8 (-128 a 127)
-            }
+            final int row = y;
+            executor.execute(() -> {
+                for (int x = 0; x < IMAGE_SIZE; x++) {
+                    int pixel = resizedBitmap.getPixel(x, row);
+                    int gray = (pixel >> 16) & 0xFF; // Estrai il valore in scala di grigi
+                    synchronized (inputBuffer) {
+                        inputBuffer.put((byte) (gray - 128)); // Centra i valori per INT8 (-128 a 127)
+                    }
+                }
+            });
         }
+
+        executor.shutdown();
+        while (!executor.isTerminated()) { } // Attendi il completamento del processamento
 
         // Buffer per l'output del modello
         byte[][] output = new byte[1][EMOTIONS.length]; // Cambia in byte[][] per INT8
 
-        // Esegui l'inferenza
+        // Esegui l'inferenza con TensorFlow Lite
         tflite.run(inputBuffer, output);
 
         // Trova l'emozione con la probabilità più alta
@@ -173,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
                 maxIndex = i;
             }
         }
+
         return EMOTIONS[maxIndex];
     }
 
@@ -261,7 +293,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private Bitmap imageProxyToBitmap(ImageProxy image) {
         // Ottieni il buffer dell'immagine
         ImageProxy.PlaneProxy[] planes = image.getPlanes();
@@ -323,5 +354,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         cameraExecutor.shutdown();
+        nnapiclose();
     }
 }
