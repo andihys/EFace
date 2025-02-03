@@ -1,4 +1,4 @@
-# EmotionalFaces Recognition App
+# EFace: Emotional Faces Recognition App
 
 ## <span style="color:blue;">Project Description</span>
 
@@ -7,6 +7,7 @@ The main objective is to develop an Android application for emotion recognition 
 1. Take a photo using the device's camera.
 2. Process the image through a TFLite model to determine the predominant emotion.
 3. Display the result directly on the user interface.
+4. Automatically analyze emotions in video streams with frame sampling.
 
 The model was trained using the **FER2013** dataset with advanced deep learning techniques, and its optimized format ensures high performance on mobile devices.
 
@@ -15,8 +16,9 @@ The model was trained using the **FER2013** dataset with advanced deep learning 
 ## <span style="color:blue;">Features</span>
 - **Image Capture**: Utilizes CameraX to take photos using the front-facing camera.
 - **Real-Time Inference**: Processes images using a convolutional neural network model.
+- **Video Frame Processing**: Automates frame analysis every 2 seconds to recognize emotions in real-time video streams.
 - **User-Friendly Interface**: Displays results directly in the app's text area.
-- **Mobile Optimization**: Model optimized through quantization.
+- **Mobile Optimization**: Model optimized through quantization and parallelization.
 
 ---
 
@@ -91,7 +93,6 @@ pip install numpy scikit-learn pillow tensorflow
 
 ## <span style="color:blue;">Technical Details</span>
 
-
 ### **Machine Learning Model**
 - Architecture: Convolutional Neural Network (CNN)
   - 3 convolutional blocks with batch normalization and dropout.
@@ -100,8 +101,16 @@ pip install numpy scikit-learn pillow tensorflow
 - Output: 7 emotion classes (`angry`, `disgust`, `fear`, `happy`, `neutral`, `sad`, `surprise`).
 
 ### **TFLite Quantization**
-- **Full-integer quantization** for optimized performance.
+- **Hybrid quantization (int8 and float16)** for optimized performance.
 - Data representative configured to ensure high accuracy.
+
+### **Video Frame Processing**
+- Captures frames every 2 seconds for real-time emotion analysis.
+- Updates the UI dynamically without user interaction.
+
+### **Parallelization**
+- **Preprocessing on CPU:** Uses multithreading for efficient image data preparation.
+- **Inference on GPU:** Utilizes NNAPI for accelerated tensor calculations on compatible hardware.
 
 ### **Dataset**
 - **Name**: FER2013 (Facial Expression Recognition 2013)
@@ -115,7 +124,7 @@ pip install numpy scikit-learn pillow tensorflow
 
 ## <span style="color:blue;">Conclusion</span>
 
-This project demonstrates the effectiveness of emotion recognition using convolutional neural networks and its integration on mobile devices. The combination of an intuitive Android app and an optimized TFLite model represents a step forward in real-world AI-based applications.
+This project demonstrates the effectiveness of emotion recognition using convolutional neural networks and its integration on mobile devices. The combination of an intuitive Android app, advanced parallelization, frame processing, and quantization techniques represents a step forward in real-world AI-based applications.
 
 ---
 
